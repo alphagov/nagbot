@@ -1,0 +1,29 @@
+#!/usr/bin/env ruby
+
+require 'nagbot'
+require 'optparse'
+
+options = {}
+OptionParser.new do |opts|
+  opts.banner = 'Usage: nagbot [options] [source dir]'
+
+  opts.on('-l', '--list-files', 'List files with nag status') { options[:list] = true }
+end.parse!
+
+if ARGV.empty?
+  SOURCE = File.join(Dir.pwd, 'source')
+else
+  SOURCE = ARGV[0]
+end
+
+puts "Using source directory: #{SOURCE}"
+
+nags = Nagbot.scan(SOURCE).map do |file|
+  data = Nagbot.parse(File.read(file))
+  nagging = Nagbot.nag?(data)
+  [file, nagging]
+end.to_h
+
+if options[:list]
+  nags.each { |n| printf("%-50s %5s\n", *n) }
+end
